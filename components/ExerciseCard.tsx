@@ -11,9 +11,37 @@ interface ExerciseCardProps {
   lastLog?: ExerciseLog;
 }
 
+const getTimeAgo = (timestamp: number) => {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years ago";
+  
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months ago";
+  
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  
+  return "Just now";
+};
+
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, isCompleted, onToggle, onSaveLog, lastLog }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
+
+  // Calculate summary string
+  let summary = null;
+  if (lastLog) {
+    const totalReps = lastLog.sets.reduce((acc, s) => acc + s.reps, 0);
+    const maxWeight = Math.max(...lastLog.sets.map(s => s.weight || 0));
+    const timeAgo = getTimeAgo(lastLog.timestamp);
+    
+    summary = `Last: ${totalReps} reps${maxWeight > 0 ? `, ${maxWeight} lbs` : ''}, ${timeAgo}`;
+  }
 
   return (
     <div 
@@ -53,11 +81,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, isComplete
           </div>
 
           {/* Last Log Summary (if available) */}
-          {lastLog && !isLogging && (
-            <div className="mt-2 text-xs text-brand-400/80 font-mono flex items-center gap-1">
-               Last: {lastLog.sets.reduce((acc, s) => acc + s.reps, 0)} reps
-               <span className="text-slate-600">•</span>
-               {new Date(lastLog.timestamp).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+          {summary && !isLogging && (
+            <div className="mt-2 text-xs text-brand-400 font-mono flex items-center gap-1 bg-brand-900/20 px-2 py-1 rounded w-fit border border-brand-900/30">
+               {summary}
             </div>
           )}
 
